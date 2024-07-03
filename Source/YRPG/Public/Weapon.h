@@ -50,6 +50,9 @@ struct FWeaponData : public FTableRowBase
 
 	UPROPERTY(EditAnywhere)
 	class UAnimMontage* PlayerReloadMontage;
+
+	UPROPERTY(EditAnywhere)
+	class USoundCue* WeaponCreateSound;
 };
 
 
@@ -92,7 +95,8 @@ private:
 	
     void SpendRound();
 	
-	
+	UPROPERTY(EditAnywhere)
+	class USoundCue* WeaponCreateSound;
 
 	UPROPERTY(EditAnywhere)
     EWeaponType WeaponType = EWeaponType::EWT_AssaultRifle;
@@ -100,6 +104,8 @@ private:
 public:
 	UPROPERTY(EditAnywhere)
 	int32 MagCapacity;
+
+    void AddAmmo(int32 AmmoToAdd);
 	
 	UPROPERTY(EditAnywhere,ReplicatedUsing=OnRep_Ammo)
 	int32 Ammo;

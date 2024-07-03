@@ -2,7 +2,7 @@
 
 
 #include "OnlinePlayerHUD.h"
-
+#include "Announcement.h"
 #include "PlayerOverlap.h"
 #include "Blueprint/UserWidget.h"
 
@@ -58,7 +58,7 @@ void AOnlinePlayerHUD::DrawCrosshair(UTexture2D* Texture, FVector2D ViewportCent
 void AOnlinePlayerHUD::BeginPlay()
 {
 	Super::BeginPlay();
-	AddPlayerOverlap();
+	
 	
 }
 
@@ -69,5 +69,15 @@ void AOnlinePlayerHUD::AddPlayerOverlap()
 	{
 		PlayerOverlap = CreateWidget<UPlayerOverlap>(PlayerController,PlayerOverlapClass);
 		PlayerOverlap->AddToViewport();
+	}
+}
+
+void AOnlinePlayerHUD::AddAnnouncement()
+{
+	APlayerController* PlayerController = GetOwningPlayerController();
+	if(PlayerController && AnnouncementClass)
+	{
+		Announcement = CreateWidget<UAnnouncement>(PlayerController,AnnouncementClass);
+		Announcement->AddToViewport();
 	}
 }

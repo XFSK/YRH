@@ -40,9 +40,21 @@ public:
 
     UPROPERTY(EditAnywhere)
     TSubclassOf<class UUserWidget> PlayerOverlapClass;
-	
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<class UUserWidget> AnnouncementClass;
+
+	UPROPERTY()
+	class UAnnouncement* Announcement;
+
+	UPROPERTY()
 	class UPlayerOverlap* PlayerOverlap;
-	
+
+	UFUNCTION()
+	void AddPlayerOverlap();
+
+    UFUNCTION()
+	void AddAnnouncement();
 private:
 	FHUDPackage HUDPackage;
 
@@ -56,5 +68,5 @@ public:
 protected:
 	virtual void BeginPlay() override;
 
-	void AddPlayerOverlap();
+	
 };

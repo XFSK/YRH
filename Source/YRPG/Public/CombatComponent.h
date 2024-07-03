@@ -43,13 +43,17 @@ public:
 	void ServerReload();
 
     void HandleReload();
+
+	int32 AmmoToReload();
+
+	UFUNCTION(BlueprintCallable)
+    void OnEquipWeaponFinish();
 	
 	UFUNCTION(NetMulticast,Reliable)
 	void WeaponCreate(AWeapon* PickWeapon);
 
 	UFUNCTION(NetMulticast,Reliable)
 	void PlayerFireMontage(UAnimMontage* AnimMontage,UParticleSystem* ParticleSystem,const FVector_NetQuantize& TraceHitTarget);
-
 	
 	UFUNCTION(Server,Reliable)
 	void ServerPlayFireMontage(UAnimMontage* AnimMontage,UParticleSystem* ParticleSystem,const FVector_NetQuantize& TraceHitTarget);  
@@ -83,6 +87,9 @@ public:
 	void InitializeCarriedAmmo();
 
 	void Reload();
+
+	UFUNCTION(BlueprintCallable)
+	void FinishReload();
 private:
 
 	UFUNCTION()
@@ -136,4 +143,6 @@ private:
 	bool bCanFire = true;
 
 	bool CanFire();
+
+	void UpdateAmmoValue();
 };

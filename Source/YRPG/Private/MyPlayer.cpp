@@ -349,6 +349,7 @@ void AMyPlayer::PickUpWeapon()
 	}
 }
 
+
 //在角色生成的时候检查任何还未创建的类，主要包括HUD
 void AMyPlayer::PollInit()
 {

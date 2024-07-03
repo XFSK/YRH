@@ -12,6 +12,7 @@
 #include "DSP/AudioDebuggingUtilities.h"
 #include "Engine/SkeletalMeshSocket.h"
 #include "Kismet/GameplayStatics.h"
+#include "Sound/SoundCue.h"
 #include "Net/UnrealNetwork.h"
 
 AWeapon::AWeapon()
@@ -42,6 +43,8 @@ void AWeapon::BeginPlay()
 	PickUpText->SetVisibility(false);
 	WeaponCreateTrack.BindDynamic(this,&AWeapon::RendersStarted);
 	WeaponCreateTimelineComponent->AddInterpFloat(WeaponCreateCurve,WeaponCreateTrack);
+	WeaponCreateSound = WeaponDataTable->FindRow<FWeaponData>("Rifle",TEXT("WeaponCreateSound"))->WeaponCreateSound;
+    WeaponCreateSound->PitchMultiplier = 0.5f;
 	if(HasAuthority())
 	{
 		BaseMaterial = WeaponDataTable->FindRow<FWeaponData>("Rifle",TEXT("WeaponMaterialInstance"))->WeaponMaterial;
@@ -142,6 +145,12 @@ void AWeapon::SpendRound()
 	SetHUDAmmo();
 }
 
+void AWeapon::AddAmmo(int32 AmmoToAdd)
+{
+	Ammo = FMath::Clamp(Ammo - AmmoToAdd,0,MagCapacity);
+	SetHUDAmmo();
+}
+
 void AWeapon::OnRep_Ammo()
 {
 	if(Owner)
@@ -169,7 +178,7 @@ void AWeapon::RendersStarted(float Value)
 void AWeapon::StartWeaponCreate()
 {
 	WeaponCreateTimelineComponent->Play();
-	
+	UGameplayStatics::PlaySound2D(this,WeaponCreateSound);
 }
 
 

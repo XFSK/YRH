@@ -114,9 +114,31 @@ void UCombatComponent::HandleReload()
 	
 }
 
+int32 UCombatComponent::AmmoToReload()
+{
+	if(EquippedWeapon == nullptr) return 0;
+	int32 RoomInMag = EquippedWeapon->MagCapacity - EquippedWeapon->Ammo;
+	if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		int32 AmmoCarried = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+		int32 Least = FMath::Min(RoomInMag,AmmoCarried);
+		return FMath::Clamp(RoomInMag,0,Least);
+	}
+	return 0;
+}
+
+void UCombatComponent::OnEquipWeaponFinish()
+{
+	if(EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
+}
+
 void UCombatComponent::ServerReload_Implementation()
 {
-	if(Player == nullptr)  return;
+	if(Player == nullptr || EquippedWeapon == nullptr)  return;
+	
 	UAnimMontage* AnimMontage = Player->PlayerReloadMontage;
 	ServerPlayMontage(AnimMontage);
 	HandleReload();
@@ -127,8 +149,14 @@ void UCombatComponent::OnRep_CombatState()
 {
 	switch (CombatState)
 	{
-	case ECombatState::ECS_Unoccupied :
+	case ECombatState::ECS_Reloading :
 		HandleReload();
+
+	case ECombatState::ECS_Unoccupied:
+		if(bFireButtonPressed)
+		{
+			Fire();
+		}
 		break;
 	}
 }
@@ -136,7 +164,7 @@ void UCombatComponent::OnRep_CombatState()
 void UCombatComponent::PlayerFireMontage_Implementation(UAnimMontage* AnimMontage,UParticleSystem* ParticleSystem,const FVector_NetQuantize& TraceHitTarget)
 {
 	UAnimInstance* AnimInstance = Player->GetMesh()->GetAnimInstance();
-	if(AnimInstance)
+	if(AnimInstance && CombatState == ECombatState::ECS_Unoccupied)
 	{
 		AnimInstance->Montage_Play(AnimMontage);
 		if(Player->IsLocallyControlled() && Player->Controller)
@@ -150,6 +178,7 @@ void UCombatComponent::PlayerFireMontage_Implementation(UAnimMontage* AnimMontag
 			EquippedWeapon->Fire(TraceHitTarget);
 		}
 	}
+	
 }
 
 
@@ -329,6 +358,10 @@ void UCombatComponent::FireTimerFinished()
 	{
 		Fire();
 	}
+	if(EquippedWeapon->IsEmpty())
+	{
+		Reload();
+	}
 }
 
 void UCombatComponent::Fire()
@@ -354,15 +387,46 @@ void UCombatComponent::Reload()
 	if(CarriedAmmo > 0)
 	{
 		ServerReload();
+		CombatState = ECombatState::ECS_Reloading;
 	}
 }
 
+void UCombatComponent::FinishReload()
+{
+	if(Player == nullptr) return;
+	if(Player->HasAuthority())
+	{
+		CombatState = ECombatState::ECS_Unoccupied;
+		UpdateAmmoValue();
+	}
+	if(bFireButtonPressed)
+	{
+		Fire();
+	}
+}
 
 
 bool UCombatComponent::CanFire()
 {
 	if(EquippedWeapon == nullptr) return false;
-	return !EquippedWeapon->IsEmpty() && bCanFire;
+	return !EquippedWeapon->IsEmpty() && bCanFire && CombatState==ECombatState::ECS_Unoccupied;
+}
+
+void UCombatComponent::UpdateAmmoValue()
+{
+	if(Player == nullptr || EquippedWeapon == nullptr)  return;
+	int32 ReloadAmount = AmmoToReload();
+	if(CarriedAmmoMap.Contains(EquippedWeapon->GetWeaponType()))
+	{
+		CarriedAmmoMap[EquippedWeapon->GetWeaponType()] -= ReloadAmount;
+		CarriedAmmo = CarriedAmmoMap[EquippedWeapon->GetWeaponType()];
+	}
+	EquippedWeapon->AddAmmo(-ReloadAmount);
+	Controller = Controller == nullptr ? Cast<AOnlinePlayerController>(Player->Controller) : Controller;
+	if(Controller)
+	{
+		Controller->SetHUDCarriedAmmo(CarriedAmmo);
+	}
 }
 
 void UCombatComponent::ServerSetAiming_Implementation(bool bIsAiming)

@@ -136,7 +136,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void Drawgun();
 	**/
-
+	
 	void PollInit();
 
 	UPROPERTY()
